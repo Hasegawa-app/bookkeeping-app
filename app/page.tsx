@@ -23,7 +23,7 @@ const optionSets: Record<OptionSetKey, string[]> = {
   purchase: ["現金", "普通預金", "買掛金", "支払手形", "仕入", "未払金"],
   expense: ["現金", "普通預金", "未払金", "通信費", "水道光熱費", "旅費交通費"],
   asset: ["現金", "普通預金", "備品", "消耗品", "未収金", "未払金"],
-  depreciation: ["減価償却費","減価償却累計額", "備品","現金","未払金","普通預金",],
+  depreciation: ["減価償却費", "減価償却累計額", "備品", "現金", "未払金", "普通預金"],
 };
 
 const questions: Question[] = [
@@ -132,15 +132,15 @@ const questions: Question[] = [
     optionSetKey: "purchase",
   },
   {
-  text: "備品の減価償却費として5,000円を間接法で計上した。",
-  debit: "減価償却費",
-  debitAmount: 5000,
-  credit: "減価償却累計額",
-  creditAmount: 5000,
-  explanation:
-    "減価償却費は費用なので借方。資産の価値減少は間接法なので減価償却累計額として貸方に計上する。",
-  optionSetKey: "depreciation",
-}
+    text: "備品の減価償却費として5,000円を間接法で計上した。",
+    debit: "減価償却費",
+    debitAmount: 5000,
+    credit: "減価償却累計額",
+    creditAmount: 5000,
+    explanation:
+      "減価償却費は費用なので借方。資産の価値減少は間接法なので減価償却累計額として貸方に計上する。",
+    optionSetKey: "depreciation",
+  },
 ];
 
 function formatNumber(value: string) {
@@ -175,6 +175,7 @@ export default function Page() {
   const [result, setResult] = useState<"correct" | "wrong" | null>(null);
   const [score, setScore] = useState(0);
   const [answered, setAnswered] = useState(false);
+  const [finished, setFinished] = useState(false);
 
   const q = questions[index];
   const accountOptions = optionSets[q.optionSetKey];
@@ -215,12 +216,11 @@ export default function Page() {
     if (!answered) return;
 
     if (isLastQuestion) {
-      setIndex(0);
-      setScore(0);
-    } else {
-      setIndex((prev) => prev + 1);
+      setFinished(true);
+      return;
     }
 
+    setIndex((prev) => prev + 1);
     setDebit("");
     setDebitAmount("");
     setDebit2("");
@@ -231,6 +231,22 @@ export default function Page() {
     setCreditAmount2("");
     setResult(null);
     setAnswered(false);
+  };
+
+  const resetQuiz = () => {
+    setIndex(0);
+    setScore(0);
+    setDebit("");
+    setDebitAmount("");
+    setDebit2("");
+    setDebitAmount2("");
+    setCredit("");
+    setCreditAmount("");
+    setCredit2("");
+    setCreditAmount2("");
+    setResult(null);
+    setAnswered(false);
+    setFinished(false);
   };
 
   const inputStyle: React.CSSProperties = {
@@ -274,6 +290,52 @@ export default function Page() {
 
     return `借方：${debitParts.join(" ／ ")}　|　貸方：${creditParts.join(" ／ ")}`;
   };
+
+  if (finished) {
+    return (
+      <div
+        style={{
+          padding: 16,
+          maxWidth: 700,
+          margin: "0 auto",
+          fontFamily: "sans-serif",
+          lineHeight: 1.5,
+        }}
+      >
+        <h1 style={{ fontSize: 28, marginBottom: 12 }}>結果</h1>
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 10,
+            padding: 20,
+            background: "#fff",
+            marginBottom: 16,
+          }}
+        >
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
+            {score} / {questions.length} 問正解
+          </div>
+          <div style={{ fontSize: 16, color: "#555" }}>
+            正答率：{Math.round((score / questions.length) * 100)}%
+          </div>
+        </div>
+
+        <button
+          onClick={resetQuiz}
+          style={{
+            ...buttonStyle,
+            background: "#0b6bcb",
+            color: "#fff",
+            fontSize: "20px",
+            padding: "18px 12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          }}
+        >
+          もう一度最初から
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -480,7 +542,7 @@ export default function Page() {
             boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
           }}
         >
-          {isLastQuestion ? "もう一度最初から" : "次の問題へ"}
+          {isLastQuestion ? "結果を見る" : "次の問題へ"}
         </button>
       )}
     </div>
