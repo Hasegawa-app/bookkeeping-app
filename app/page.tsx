@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 type OptionSetKey = "sales" | "purchase" | "expense" | "asset" | "depreciation";
 
@@ -26,7 +26,7 @@ const optionSets: Record<OptionSetKey, string[]> = {
   depreciation: ["減価償却費", "減価償却累計額", "備品", "現金", "未払金", "普通預金"],
 };
 
-const questions: Question[] = [
+const baseQuestions: Question[] = [
   {
     text: "商品30,000円を売り上げ、代金は現金で受け取った。",
     debit: "現金",
@@ -143,6 +143,15 @@ const questions: Question[] = [
   },
 ];
 
+function shuffleArray<T>(array: T[]) {
+  const copied = [...array];
+  for (let i = copied.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
+}
+
 function formatNumber(value: string) {
   const digits = value.replace(/,/g, "").replace(/[^\d]/g, "");
   if (!digits) return "";
@@ -160,6 +169,7 @@ function formatAmount(amount?: number) {
 }
 
 export default function Page() {
+  const [questions, setQuestions] = useState<Question[]>(() => shuffleArray(baseQuestions));
   const [index, setIndex] = useState(0);
 
   const [debit, setDebit] = useState("");
@@ -178,128 +188,124 @@ export default function Page() {
   const [finished, setFinished] = useState(false);
 
   const q = questions[index];
-  const accountOptions = optionSets[q.optionSetKey];
+  const accountOptions = useMemo(
+    () => shuffleArray(optionSets[q.optionSetKey]),
+    [q.optionSetKey, index]
+  );
   const isLastQuestion = index === questions.length - 1;
 
   const normalizeText = (value: string) => value.trim();
 
   const sameEntries = (
-  userEntries: Array<{ account: string; amount: number }>,
-  correctEntries: Array<{ account: string; amount: number }>
+    userEntries: Array<{ account: string; amount: number }>,
+    correctEntries: Array<{ account: string; amount: number }>
   ) => {
-  if (userEntries.length !== correctEntries.length) return false;
+    if (userEntries.length !== correctEntries.length) return false;
 
-  const normalize = (entries: Array<{ account: string; amount: number }>) =>
-    entries
-      .map((entry) => ({
-        account: entry.account,
-        amount: entry.amount,
-      }))
-      .sort((a, b) => {
-        const accountCompare = a.account.localeCompare(b.account, "ja");
-        if (accountCompare !== 0) return accountCompare;
-        return a.amount - b.amount;
-      });
+    const normalize = (entries: Array<{ account: string; amount: number }>) =>
+      entries
+        .map((entry) => ({
+          account: entry.account,
+          amount: entry.amount,
+        }))
+        .sort((a, b) => {
+          const accountCompare = a.account.localeCompare(b.account, "ja");
+          if (accountCompare !== 0) return accountCompare;
+          return a.amount - b.amount;
+        });
 
-  const normalizedUser = normalize(userEntries);
-  const normalizedCorrect = normalize(correctEntries);
+    const normalizedUser = normalize(userEntries);
+    const normalizedCorrect = normalize(correctEntries);
 
-  return normalizedUser.every(
-    (entry, i) =>
-      entry.account === normalizedCorrect[i].account &&
-      entry.amount === normalizedCorrect[i].amount
-  );
-};
-const checkAnswer = () => {
-  if (answered) return;
+    return normalizedUser.every(
+      (entry, i) =>
+        entry.account === normalizedCorrect[i].account &&
+        entry.amount === normalizedCorrect[i].amount
+    );
+  };
 
-  const userDebits = [
-    {
-      account: normalizeText(debit),
-      amount: parseNumber(debitAmount),
-    },
-    ...(normalizeText(debit2) && parseNumber(debitAmount2) !== null
-      ? [
-          {
-            account: normalizeText(debit2),
-            amount: parseNumber(debitAmount2) as number,
-          },
-        ]
-      : []),
-  ].filter((entry) => entry.account && entry.amount !== null) as Array<{
-    account: string;
-    amount: number;
-  }>;
+  const checkAnswer = () => {
+    if (answered) return;
 
-  const userCredits = [
-    {
-      account: normalizeText(credit),
-      amount: parseNumber(creditAmount),
-    },
-    ...(normalizeText(credit2) && parseNumber(creditAmount2) !== null
-      ? [
-          {
-            account: normalizeText(credit2),
-            amount: parseNumber(creditAmount2) as number,
-          },
-        ]
-      : []),
-  ].filter((entry) => entry.account && entry.amount !== null) as Array<{
-    account: string;
-    amount: number;
-  }>;
+    const userDebits = [
+      {
+        account: normalizeText(debit),
+        amount: parseNumber(debitAmount),
+      },
+      ...(normalizeText(debit2) && parseNumber(debitAmount2) !== null
+        ? [
+            {
+              account: normalizeText(debit2),
+              amount: parseNumber(debitAmount2) as number,
+            },
+          ]
+        : []),
+    ].filter((entry) => entry.account && entry.amount !== null) as Array<{
+      account: string;
+      amount: number;
+    }>;
 
-  const correctDebits = [
-    {
-      account: q.debit,
-      amount: q.debitAmount,
-    },
-    ...(q.debit2 && q.debitAmount2 !== undefined
-      ? [
-          {
-            account: q.debit2,
-            amount: q.debitAmount2,
-          },
-        ]
-      : []),
-  ];
+    const userCredits = [
+      {
+        account: normalizeText(credit),
+        amount: parseNumber(creditAmount),
+      },
+      ...(normalizeText(credit2) && parseNumber(creditAmount2) !== null
+        ? [
+            {
+              account: normalizeText(credit2),
+              amount: parseNumber(creditAmount2) as number,
+            },
+          ]
+        : []),
+    ].filter((entry) => entry.account && entry.amount !== null) as Array<{
+      account: string;
+      amount: number;
+    }>;
 
-  const correctCredits = [
-    {
-      account: q.credit,
-      amount: q.creditAmount,
-    },
-    ...(q.credit2 && q.creditAmount2 !== undefined
-      ? [
-          {
-            account: q.credit2,
-            amount: q.creditAmount2,
-          },
-        ]
-      : []),
-  ];
+    const correctDebits = [
+      {
+        account: q.debit,
+        amount: q.debitAmount,
+      },
+      ...(q.debit2 && q.debitAmount2 !== undefined
+        ? [
+            {
+              account: q.debit2,
+              amount: q.debitAmount2,
+            },
+          ]
+        : []),
+    ];
 
-  const isCorrect =
-    sameEntries(userDebits, correctDebits) &&
-    sameEntries(userCredits, correctCredits);
+    const correctCredits = [
+      {
+        account: q.credit,
+        amount: q.creditAmount,
+      },
+      ...(q.credit2 && q.creditAmount2 !== undefined
+        ? [
+            {
+              account: q.credit2,
+              amount: q.creditAmount2,
+            },
+          ]
+        : []),
+    ];
 
-  setResult(isCorrect ? "correct" : "wrong");
-  setAnswered(true);
+    const isCorrect =
+      sameEntries(userDebits, correctDebits) &&
+      sameEntries(userCredits, correctCredits);
 
-  if (isCorrect) {
-    setScore((prev) => prev + 1);
-  }
-};
+    setResult(isCorrect ? "correct" : "wrong");
+    setAnswered(true);
 
-  const nextQuestion = () => {
-    if (!answered) return;
-
-    if (isLastQuestion) {
-      setFinished(true);
-      return;
+    if (isCorrect) {
+      setScore((prev) => prev + 1);
     }
+  };
 
-    setIndex((prev) => prev + 1);
+  const clearInputs = () => {
     setDebit("");
     setDebitAmount("");
     setDebit2("");
@@ -312,19 +318,23 @@ const checkAnswer = () => {
     setAnswered(false);
   };
 
+  const nextQuestion = () => {
+    if (!answered) return;
+
+    if (isLastQuestion) {
+      setFinished(true);
+      return;
+    }
+
+    setIndex((prev) => prev + 1);
+    clearInputs();
+  };
+
   const resetQuiz = () => {
+    setQuestions(shuffleArray(baseQuestions));
     setIndex(0);
     setScore(0);
-    setDebit("");
-    setDebitAmount("");
-    setDebit2("");
-    setDebitAmount2("");
-    setCredit("");
-    setCreditAmount("");
-    setCredit2("");
-    setCreditAmount2("");
-    setResult(null);
-    setAnswered(false);
+    clearInputs();
     setFinished(false);
   };
 
@@ -584,16 +594,21 @@ const checkAnswer = () => {
             marginBottom: 14,
             padding: 14,
             borderRadius: 10,
-            background: result === "correct" ? "#e8f7e8" : "#fff3f3",
-            border: `1px solid ${result === "correct" ? "#8bc48b" : "#e0a0a0"}`,
+            background: result === "correct" ? "#dcfce7" : "#fff3f3",
+            border: `2px solid ${result === "correct" ? "#22c55e" : "#e0a0a0"}`,
+            boxShadow:
+              result === "correct"
+                ? "0 4px 14px rgba(34,197,94,0.18)"
+                : "0 2px 8px rgba(224,160,160,0.12)",
           }}
         >
           <div
             style={{
-              fontSize: 20,
-              fontWeight: 700,
+              fontSize: result === "correct" ? 26 : 20,
+              fontWeight: 800,
               marginBottom: 8,
-              color: result === "correct" ? "#1d6b1d" : "#a33",
+              color: result === "correct" ? "#15803d" : "#a33",
+              letterSpacing: result === "correct" ? "0.04em" : "normal",
             }}
           >
             {result === "correct" ? "正解！" : "不正解"}
