@@ -141,7 +141,7 @@ const purchaseQuestions: Question[] = [
     optionSetKey: "purchase",
   },
   {
-    text: "商品125,000円を仕入れ、25,000円現金、残額は掛け。",
+    text: "商品125,000円を仕入れ、25,000円を現金で支払い、残額を掛けとした。",
     debit: "仕入",
     debitAmount: 125000,
     credit: "現金",
@@ -197,7 +197,7 @@ const expenseQuestions: Question[] = [
 
 const assetQuestions: Question[] = [
   {
-    text: "備品130,000円を普通預金で購入。",
+    text: "備品130,000円を普通預金で購入した。",
     debit: "備品",
     debitAmount: 130000,
     credit: "普通預金",
@@ -207,7 +207,7 @@ const assetQuestions: Question[] = [
     optionSetKey: "asset",
   },
   {
-    text: "土地700,000円を購入し、200,000円現金、残額未払。",
+    text: "土地700,000円を購入し、200,000円を現金で支払い、残額を未払金とした。",
     debit: "土地",
     debitAmount: 700000,
     credit: "現金",
@@ -226,21 +226,23 @@ const assetQuestions: Question[] = [
 
 const depreciationQuestions: Question[] = [
   {
-    text: "建物の減価償却費32,000円（間接法）。",
+    text: "3月31日の決算において、当期首に取得し使用を開始した建物（取得原価￥6,000、耐用年数30年、残存価額はゼロ）の減価償却を定額法により行った。",
     debit: "減価償却費",
-    debitAmount: 32000,
+    debitAmount: 200,
     credit: "建物減価償却累計額",
-    creditAmount: 32000,
-    explanation: "間接法。",
+    creditAmount: 200,
+  explanation:
+  "減価償却費は費用なので借方に記入する。6,000円÷30年＝200円より当期の減価償却費は200円となる。間接法では資産を直接減らさず、貸方に減価償却累計額を計上する。",
     optionSetKey: "depreciation",
   },
   {
-    text: "備品の減価償却費14,000円（間接法）。",
+    text: "備品の減価償却費14,000円を間接法で計上した。",
     debit: "減価償却費",
     debitAmount: 14000,
     credit: "備品減価償却累計額",
     creditAmount: 14000,
-    explanation: "間接法。",
+    explanation:
+      "減価償却費は費用として借方に記入する。間接法のため貸方は備品減価償却累計額となる。",
     optionSetKey: "depreciation",
   },
 ];
