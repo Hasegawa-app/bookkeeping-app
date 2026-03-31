@@ -4,7 +4,7 @@ export type OptionSetKey =
   | "expense"
   | "asset"
   | "depreciation"
-  | "adjustments";
+  | "adjustment";
 
 export type Question = {
   text: string;
