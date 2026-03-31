@@ -54,111 +54,192 @@ export const optionSets: Record<OptionSetKey, string[]> = {
   ],
 };
 
-export const questions: Question[] = [
+/* =========================
+   売上
+========================= */
+
+const salesQuestions: Question[] = [
   {
-    text: "商品100,000円を売り、代金のうち60,000円は現金で受け取り、残額は掛けとした。",
+    text: "商品100,000円を売り、60,000円は現金、残額は掛けとした。",
     debit: "現金",
     debitAmount: 60000,
     debit2: "売掛金",
     debitAmount2: 40000,
     credit: "売上",
     creditAmount: 100000,
-    explanation:
-      "商品を売ったので貸方は売上100,000円。受け取った代金のうち現金60,000円は借方に現金、残り40,000円は後で受け取るため借方に売掛金を記入する。",
+    explanation: "現金と売掛金に分ける。",
     optionSetKey: "sales",
   },
   {
-    text: "商品80,000円を仕入れ、代金のうち30,000円は現金で支払い、残額は掛けとした。",
-    debit: "仕入",
-    debitAmount: 80000,
-    credit: "現金",
-    creditAmount: 30000,
-    credit2: "買掛金",
-    creditAmount2: 50000,
-    explanation:
-      "商品を仕入れたので借方は仕入80,000円。支払った現金30,000円は貸方に現金、残り50,000円は後払いなので貸方に買掛金を記入する。",
-    optionSetKey: "purchase",
-  },
-  {
-    text: "通信費12,000円を現金で支払った。",
-    debit: "通信費",
-    debitAmount: 12000,
-    credit: "現金",
-    creditAmount: 12000,
-    explanation:
-      "費用の発生なので借方は通信費、支払手段が現金なので貸方は現金となる。",
-    optionSetKey: "expense",
-  },
-  {
-    text: "備品150,000円を購入し、代金は翌月払いとした。",
-    debit: "備品",
-    debitAmount: 150000,
-    credit: "未払金",
-    creditAmount: 150000,
-    explanation:
-      "備品を購入したので借方は備品。代金はまだ支払っていないので貸方は未払金となる。",
-    optionSetKey: "asset",
-  },
-  {
-    text: "建物について間接法により減価償却を行い、当期の減価償却費は40,000円であった。",
-    debit: "減価償却費",
-    debitAmount: 40000,
-    credit: "建物減価償却累計額",
-    creditAmount: 40000,
-    explanation:
-      "間接法なので、資産そのものを直接減らさず、貸方に建物減価償却累計額を計上する。借方は費用として減価償却費。",
-    optionSetKey: "depreciation",
-  },
-  {
-    text: "商品50,000円を売り、代金は掛けとした。",
+    text: "商品95,000円を売り、代金は掛けとした。",
     debit: "売掛金",
-    debitAmount: 50000,
+    debitAmount: 95000,
     credit: "売上",
-    creditAmount: 50000,
-    explanation:
-      "商品を売ったので貸方は売上。代金は後で受け取るため借方は売掛金。",
+    creditAmount: 95000,
+    explanation: "掛け売上。",
     optionSetKey: "sales",
   },
   {
-    text: "商品40,000円を仕入れ、代金は現金で支払った。",
-    debit: "仕入",
+    text: "商品60,000円を売り、代金は現金で受け取った。",
+    debit: "現金",
+    debitAmount: 60000,
+    credit: "売上",
+    creditAmount: 60000,
+    explanation: "現金売上。",
+    optionSetKey: "sales",
+  },
+  {
+    text: "商品140,000円を売り、40,000円は現金、残額は掛けとした。",
+    debit: "現金",
     debitAmount: 40000,
-    credit: "現金",
-    creditAmount: 40000,
-    explanation:
-      "商品を仕入れたので借方は仕入。支払手段が現金なので貸方は現金。",
+    debit2: "売掛金",
+    debitAmount2: 100000,
+    credit: "売上",
+    creditAmount: 140000,
+    explanation: "現金＋売掛。",
+    optionSetKey: "sales",
+  },
+  {
+    text: "商品75,000円を売り、受取手形で受け取った。",
+    debit: "受取手形",
+    debitAmount: 75000,
+    credit: "売上",
+    creditAmount: 75000,
+    explanation: "手形受取。",
+    optionSetKey: "sales",
+  },
+];
+
+/* =========================
+   仕入
+========================= */
+
+const purchaseQuestions: Question[] = [
+  {
+    text: "商品105,000円を仕入れ、代金は掛けとした。",
+    debit: "仕入",
+    debitAmount: 105000,
+    credit: "買掛金",
+    creditAmount: 105000,
+    explanation: "掛け仕入。",
     optionSetKey: "purchase",
   },
   {
-    text: "旅費交通費8,500円を現金で支払った。",
-    debit: "旅費交通費",
-    debitAmount: 8500,
+    text: "商品35,000円を仕入れ、現金で支払った。",
+    debit: "仕入",
+    debitAmount: 35000,
     credit: "現金",
-    creditAmount: 8500,
-    explanation:
-      "旅費交通費という費用が発生したので借方。現金で支払っているので貸方は現金。",
+    creditAmount: 35000,
+    explanation: "現金仕入。",
+    optionSetKey: "purchase",
+  },
+  {
+    text: "商品125,000円を仕入れ、25,000円現金、残額は掛け。",
+    debit: "仕入",
+    debitAmount: 125000,
+    credit: "現金",
+    creditAmount: 25000,
+    credit2: "買掛金",
+    creditAmount2: 100000,
+    explanation: "現金＋買掛金。",
+    optionSetKey: "purchase",
+  },
+];
+
+/* =========================
+   費用
+========================= */
+
+const expenseQuestions: Question[] = [
+  {
+    text: "通信費14,000円を現金で支払った。",
+    debit: "通信費",
+    debitAmount: 14000,
+    credit: "現金",
+    creditAmount: 14000,
+    explanation: "費用支払い。",
     optionSetKey: "expense",
   },
   {
-    text: "車両運搬具300,000円を購入し、100,000円を現金で支払い、残額は翌月払いとした。",
-    debit: "車両運搬具",
-    debitAmount: 300000,
-    credit: "現金",
-    creditAmount: 100000,
-    credit2: "未払金",
-    creditAmount2: 200000,
-    explanation:
-      "車両運搬具を取得したので借方は車両運搬具300,000円。支払った100,000円は貸方に現金、残額200,000円は未払金。",
+    text: "雑費2,500円を普通預金から支払った。",
+    debit: "雑費",
+    debitAmount: 2500,
+    credit: "普通預金",
+    creditAmount: 2500,
+    explanation: "普通預金支払い。",
+    optionSetKey: "expense",
+  },
+  {
+    text: "租税公課12,000円を普通預金から支払った。",
+    debit: "租税公課",
+    debitAmount: 12000,
+    credit: "普通預金",
+    creditAmount: 12000,
+    explanation: "税金支払い。",
+    optionSetKey: "expense",
+  },
+];
+
+/* =========================
+   資産
+========================= */
+
+const assetQuestions: Question[] = [
+  {
+    text: "備品130,000円を普通預金で購入。",
+    debit: "備品",
+    debitAmount: 130000,
+    credit: "普通預金",
+    creditAmount: 130000,
+    explanation: "資産取得。",
     optionSetKey: "asset",
   },
   {
-    text: "備品について間接法により減価償却を行い、当期の減価償却費は25,000円であった。",
+    text: "土地700,000円を購入し、200,000円現金、残額未払。",
+    debit: "土地",
+    debitAmount: 700000,
+    credit: "現金",
+    creditAmount: 200000,
+    credit2: "未払金",
+    creditAmount2: 500000,
+    explanation: "現金＋未払。",
+    optionSetKey: "asset",
+  },
+];
+
+/* =========================
+   減価償却
+========================= */
+
+const depreciationQuestions: Question[] = [
+  {
+    text: "建物の減価償却費32,000円（間接法）。",
     debit: "減価償却費",
-    debitAmount: 25000,
-    credit: "備品減価償却累計額",
-    creditAmount: 25000,
-    explanation:
-      "間接法では貸方に備品減価償却累計額を計上する。借方は減価償却費。",
+    debitAmount: 32000,
+    credit: "建物減価償却累計額",
+    creditAmount: 32000,
+    explanation: "間接法。",
     optionSetKey: "depreciation",
   },
+  {
+    text: "備品の減価償却費14,000円（間接法）。",
+    debit: "減価償却費",
+    debitAmount: 14000,
+    credit: "備品減価償却累計額",
+    creditAmount: 14000,
+    explanation: "間接法。",
+    optionSetKey: "depreciation",
+  },
+];
+
+/* =========================
+   統合
+========================= */
+
+export const questions: Question[] = [
+  ...salesQuestions,
+  ...purchaseQuestions,
+  ...expenseQuestions,
+  ...assetQuestions,
+  ...depreciationQuestions,
 ];
