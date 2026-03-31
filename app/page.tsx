@@ -121,7 +121,26 @@ export default function Page() {
 
   const accountOptions = useMemo(() => {
     if (!currentQuestion) return [];
-    return shuffleArray(optionSets[currentQuestion.optionSetKey]);
+
+    const allOptions = optionSets[currentQuestion.optionSetKey];
+
+    const correctAccounts = [
+      currentQuestion.debit,
+      currentQuestion.debit2,
+      currentQuestion.credit,
+      currentQuestion.credit2,
+    ].filter((account): account is string => Boolean(account));
+
+    const uniqueCorrectAccounts = Array.from(new Set(correctAccounts));
+
+    const dummyCandidates = allOptions.filter(
+      (account) => !uniqueCorrectAccounts.includes(account)
+    );
+
+    const shuffledDummies = shuffleArray(dummyCandidates);
+    const selectedDummies = shuffledDummies.slice(0, 4);
+
+    return shuffleArray([...uniqueCorrectAccounts, ...selectedDummies]);
   }, [currentQuestion]);
 
   if (!currentQuestion) {
@@ -248,20 +267,6 @@ export default function Page() {
           <p className="leading-7">{currentQuestion.text}</p>
         </div>
 
-        <div className="mb-4 rounded-2xl bg-white p-5 shadow">
-          <h2 className="mb-3 text-lg font-bold">候補科目</h2>
-          <div className="flex flex-wrap gap-2">
-            {accountOptions.map((option) => (
-              <span
-                key={option}
-                className="rounded-full bg-slate-200 px-3 py-1 text-sm"
-              >
-                {option}
-              </span>
-            ))}
-          </div>
-        </div>
-
         <div className="grid gap-4 md:grid-cols-2">
           <section className="rounded-2xl bg-white p-5 shadow">
             <h2 className="mb-4 text-xl font-bold text-blue-700">借方</h2>
@@ -274,16 +279,26 @@ export default function Page() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   勘定科目 {index + 1}
                 </label>
-                <input
-                  type="text"
+                <select
                   value={line.account}
                   onChange={(e) =>
-                    handleLineChange("debit", index as 0 | 1, "account", e.target.value)
+                    handleLineChange(
+                      "debit",
+                      index as 0 | 1,
+                      "account",
+                      e.target.value
+                    )
                   }
                   disabled={isAnswered}
-                  className="mb-3 w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-blue-500"
-                  placeholder="例：現金"
-                />
+                  className="mb-3 w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:border-blue-500"
+                >
+                  <option value="">選択してください</option>
+                  {accountOptions.map((option) => (
+                    <option key={`debit-${index}-${option}`} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
 
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   金額 {index + 1}
@@ -293,7 +308,12 @@ export default function Page() {
                   inputMode="numeric"
                   value={line.amount}
                   onChange={(e) =>
-                    handleLineChange("debit", index as 0 | 1, "amount", e.target.value)
+                    handleLineChange(
+                      "debit",
+                      index as 0 | 1,
+                      "amount",
+                      e.target.value
+                    )
                   }
                   disabled={isAnswered}
                   className="w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-blue-500"
@@ -314,16 +334,26 @@ export default function Page() {
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   勘定科目 {index + 1}
                 </label>
-                <input
-                  type="text"
+                <select
                   value={line.account}
                   onChange={(e) =>
-                    handleLineChange("credit", index as 0 | 1, "account", e.target.value)
+                    handleLineChange(
+                      "credit",
+                      index as 0 | 1,
+                      "account",
+                      e.target.value
+                    )
                   }
                   disabled={isAnswered}
-                  className="mb-3 w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-rose-500"
-                  placeholder="例：売上"
-                />
+                  className="mb-3 w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:border-rose-500"
+                >
+                  <option value="">選択してください</option>
+                  {accountOptions.map((option) => (
+                    <option key={`credit-${index}-${option}`} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
 
                 <label className="mb-2 block text-sm font-medium text-slate-700">
                   金額 {index + 1}
@@ -333,7 +363,12 @@ export default function Page() {
                   inputMode="numeric"
                   value={line.amount}
                   onChange={(e) =>
-                    handleLineChange("credit", index as 0 | 1, "amount", e.target.value)
+                    handleLineChange(
+                      "credit",
+                      index as 0 | 1,
+                      "amount",
+                      e.target.value
+                    )
                   }
                   disabled={isAnswered}
                   className="w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-rose-500"
