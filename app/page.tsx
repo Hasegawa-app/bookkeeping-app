@@ -118,55 +118,12 @@ export default function Page() {
   }, []);
 
   const totalQuestions = shuffledQuestions.length;
-
-  if (totalQuestions === 0) {
-    return (
-      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
-        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
-          読み込み中...
-        </div>
-      </main>
-    );
-  }
-
-  if (currentIndex >= totalQuestions) {
-    const percentage = Math.round((score / totalQuestions) * 100);
-
-    return (
-      <main className="min-h-screen bg-slate-100 p-4">
-        <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-xl">
-          <h1 className="text-2xl font-bold text-center mb-6">結果画面</h1>
-
-          <div className="rounded-2xl bg-slate-50 p-6 text-center border">
-            <p className="text-lg mb-2">おつかれさま</p>
-            <p className="text-3xl font-bold mb-2">
-              {score} / {totalQuestions} 問正解
-            </p>
-            <p className="text-slate-600">正答率：{percentage}%</p>
-          </div>
-
-          <button
-            onClick={() => {
-              setShuffledQuestions(shuffleArray(questions));
-              setCurrentIndex(0);
-              setDebitLines(makeInitialLines());
-              setCreditLines(makeInitialLines());
-              setIsAnswered(false);
-              setIsCorrect(false);
-              setScore(0);
-            }}
-            className="mt-6 w-full rounded-2xl bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-blue-700 active:scale-[0.99]"
-          >
-            もう一度挑戦する
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  const currentQuestion = shuffledQuestions[currentIndex];
+  const currentQuestion =
+    currentIndex < totalQuestions ? shuffledQuestions[currentIndex] : null;
 
   const accountOptions = useMemo(() => {
+    if (!currentQuestion) return [];
+
     const allOptions = optionSets[currentQuestion.optionSetKey];
 
     const correctAccounts = [
@@ -188,19 +145,25 @@ export default function Page() {
     return shuffleArray([...uniqueCorrectAccounts, ...selectedDummies]);
   }, [currentQuestion]);
 
-  const correctDebitLines = buildCorrectLines(
-    currentQuestion.debit,
-    currentQuestion.debitAmount,
-    currentQuestion.debit2,
-    currentQuestion.debitAmount2
-  );
+  const correctDebitLines = useMemo(() => {
+    if (!currentQuestion) return [];
+    return buildCorrectLines(
+      currentQuestion.debit,
+      currentQuestion.debitAmount,
+      currentQuestion.debit2,
+      currentQuestion.debitAmount2
+    );
+  }, [currentQuestion]);
 
-  const correctCreditLines = buildCorrectLines(
-    currentQuestion.credit,
-    currentQuestion.creditAmount,
-    currentQuestion.credit2,
-    currentQuestion.creditAmount2
-  );
+  const correctCreditLines = useMemo(() => {
+    if (!currentQuestion) return [];
+    return buildCorrectLines(
+      currentQuestion.credit,
+      currentQuestion.creditAmount,
+      currentQuestion.credit2,
+      currentQuestion.creditAmount2
+    );
+  }, [currentQuestion]);
 
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
@@ -247,6 +210,63 @@ export default function Page() {
     setIsCorrect(false);
     setCurrentIndex((prev) => prev + 1);
   };
+
+  const handleRestart = () => {
+    setShuffledQuestions(shuffleArray(questions));
+    setCurrentIndex(0);
+    setDebitLines(makeInitialLines());
+    setCreditLines(makeInitialLines());
+    setIsAnswered(false);
+    setIsCorrect(false);
+    setScore(0);
+  };
+
+  if (totalQuestions === 0) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
+        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
+          読み込み中...
+        </div>
+      </main>
+    );
+  }
+
+  if (currentIndex >= totalQuestions) {
+    const percentage = Math.round((score / totalQuestions) * 100);
+
+    return (
+      <main className="min-h-screen bg-slate-100 p-4">
+        <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-xl">
+          <h1 className="text-2xl font-bold text-center mb-6">結果画面</h1>
+
+          <div className="rounded-2xl bg-slate-50 p-6 text-center border">
+            <p className="text-lg mb-2">おつかれさま</p>
+            <p className="text-3xl font-bold mb-2">
+              {score} / {totalQuestions} 問正解
+            </p>
+            <p className="text-slate-600">正答率：{percentage}%</p>
+          </div>
+
+          <button
+            onClick={handleRestart}
+            className="mt-6 w-full rounded-2xl bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-blue-700 active:scale-[0.99]"
+          >
+            もう一度挑戦する
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!currentQuestion) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
+        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
+          読み込み中...
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-4">
