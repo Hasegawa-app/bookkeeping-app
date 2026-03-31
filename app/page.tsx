@@ -60,6 +60,7 @@ function compareLinesUnordered(
   correctLines: { account: string; amount: number }[]
 ) {
   const filteredUserLines = userLines.filter(isLineFilled);
+
   if (filteredUserLines.length !== correctLines.length) return false;
 
   const normalizedUser = filteredUserLines
@@ -67,20 +68,29 @@ function compareLinesUnordered(
       account: normalizeText(line.account),
       amount: parseAmount(line.amount),
     }))
-    .sort((a, b) => a.account.localeCompare(b.account));
+    .sort((a, b) => {
+      if (a.account < b.account) return -1;
+      if (a.account > b.account) return 1;
+      return (a.amount ?? 0) - (b.amount ?? 0);
+    });
 
   const normalizedCorrect = correctLines
     .map((line) => ({
       account: normalizeText(line.account),
       amount: line.amount,
     }))
-    .sort((a, b) => a.account.localeCompare(b.account));
+    .sort((a, b) => {
+      if (a.account < b.account) return -1;
+      if (a.account > b.account) return 1;
+      return a.amount - b.amount;
+    });
 
-  return normalizedUser.every(
-    (line, i) =>
-      line.account === normalizedCorrect[i].account &&
-      line.amount === normalizedCorrect[i].amount
-  );
+  return normalizedUser.every((line, index) => {
+    return (
+      line.account === normalizedCorrect[index].account &&
+      line.amount === normalizedCorrect[index].amount
+    );
+  });
 }
 
 function makeInitialLines(): [AnswerLine, AnswerLine] {
@@ -94,113 +104,366 @@ export default function Page() {
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const [debitLines, setDebitLines] = useState(makeInitialLines());
-  const [creditLines, setCreditLines] = useState(makeInitialLines());
+  const [debitLines, setDebitLines] = useState<[AnswerLine, AnswerLine]>(
+    makeInitialLines()
+  );
+  const [creditLines, setCreditLines] = useState<[AnswerLine, AnswerLine]>(
+    makeInitialLines()
+  );
 
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState(0);
 
-  // 初回ロード
   useEffect(() => {
     const shuffled = shuffleArray(questions);
     setShuffledQuestions(shuffled.slice(0, QUESTION_COUNT));
   }, []);
 
-  const currentQuestion = shuffledQuestions[currentIndex];
+  const totalQuestions = shuffledQuestions.length;
+  const currentQuestion =
+    currentIndex < totalQuestions ? shuffledQuestions[currentIndex] : null;
 
   const accountOptions = useMemo(() => {
     if (!currentQuestion) return [];
 
-    const all = optionSets[currentQuestion.optionSetKey];
+    const allOptions = optionSets[currentQuestion.optionSetKey];
 
-    const correct = [
+    const correctAccounts = [
       currentQuestion.debit,
       currentQuestion.debit2,
       currentQuestion.credit,
       currentQuestion.credit2,
-    ].filter((v): v is string => Boolean(v));
+    ].filter((account): account is string => Boolean(account));
 
-    const unique = Array.from(new Set(correct));
+    const uniqueCorrectAccounts = Array.from(new Set(correctAccounts));
 
-    const dummy = shuffleArray(
-      all.filter((a) => !unique.includes(a))
-    ).slice(0, 4);
+    const dummyCandidates = allOptions.filter(
+      (account) => !uniqueCorrectAccounts.includes(account)
+    );
 
-    return shuffleArray([...unique, ...dummy]);
+    const shuffledDummies = shuffleArray(dummyCandidates);
+    const selectedDummies = shuffledDummies.slice(0, 4);
+
+    return shuffleArray([...uniqueCorrectAccounts, ...selectedDummies]);
   }, [currentQuestion]);
 
-  const correctDebit = buildCorrectLines(
-    currentQuestion?.debit,
-    currentQuestion?.debitAmount,
-    currentQuestion?.debit2,
-    currentQuestion?.debitAmount2
-  );
+  const correctDebitLines = useMemo(() => {
+    if (!currentQuestion) return [];
+    return buildCorrectLines(
+      currentQuestion.debit,
+      currentQuestion.debitAmount,
+      currentQuestion.debit2,
+      currentQuestion.debitAmount2
+    );
+  }, [currentQuestion]);
 
-  const correctCredit = buildCorrectLines(
-    currentQuestion?.credit,
-    currentQuestion?.creditAmount,
-    currentQuestion?.credit2,
-    currentQuestion?.creditAmount2
-  );
+  const correctCreditLines = useMemo(() => {
+    if (!currentQuestion) return [];
+    return buildCorrectLines(
+      currentQuestion.credit,
+      currentQuestion.creditAmount,
+      currentQuestion.credit2,
+      currentQuestion.creditAmount2
+    );
+  }, [currentQuestion]);
 
-  const handleCheck = () => {
-    const ok =
-      compareLinesUnordered(debitLines, correctDebit) &&
-      compareLinesUnordered(creditLines, correctCredit);
+  const isLastQuestion = currentIndex === totalQuestions - 1;
 
-    setIsCorrect(ok);
+  const handleLineChange = (
+    side: "debit" | "credit",
+    index: 0 | 1,
+    key: "account" | "amount",
+    value: string
+  ) => {
+    if (side === "debit") {
+      const newLines: [AnswerLine, AnswerLine] = [...debitLines];
+      newLines[index] = {
+        ...newLines[index],
+        [key]: key === "amount" ? formatAmountInput(value) : value,
+      };
+      setDebitLines(newLines);
+    } else {
+      const newLines: [AnswerLine, AnswerLine] = [...creditLines];
+      newLines[index] = {
+        ...newLines[index],
+        [key]: key === "amount" ? formatAmountInput(value) : value,
+      };
+      setCreditLines(newLines);
+    }
+  };
+
+  const handleCheckAnswer = () => {
+    const debitOk = compareLinesUnordered(debitLines, correctDebitLines);
+    const creditOk = compareLinesUnordered(creditLines, correctCreditLines);
+    const result = debitOk && creditOk;
+
+    setIsCorrect(result);
     setIsAnswered(true);
-    if (ok) setScore((s) => s + 1);
+
+    if (result) {
+      setScore((prev) => prev + 1);
+    }
   };
 
-  const handleNext = () => {
-    setCurrentIndex((i) => i + 1);
-    setDebitLines(makeInitialLines());
-    setCreditLines(makeInitialLines());
-    setIsAnswered(false);
-  };
-
-  // ★ここが今回の本題
-  const handleRestart = () => {
-    const shuffled = shuffleArray(questions);
-    setShuffledQuestions(shuffled.slice(0, QUESTION_COUNT));
-
-    setCurrentIndex(0);
-    setScore(0);
+  const handleNextQuestion = () => {
     setDebitLines(makeInitialLines());
     setCreditLines(makeInitialLines());
     setIsAnswered(false);
     setIsCorrect(false);
+    setCurrentIndex((prev) => prev + 1);
   };
 
-  if (!currentQuestion) return <div>Loading...</div>;
+  const handleRestart = () => {
+    const shuffled = shuffleArray(questions);
+    setShuffledQuestions(shuffled.slice(0, QUESTION_COUNT));
+    setCurrentIndex(0);
+    setDebitLines(makeInitialLines());
+    setCreditLines(makeInitialLines());
+    setIsAnswered(false);
+    setIsCorrect(false);
+    setScore(0);
+  };
 
-  if (currentIndex >= shuffledQuestions.length) {
+  if (totalQuestions === 0) {
     return (
-      <div>
-        <h2>結果</h2>
-        <p>
-          {score} / {shuffledQuestions.length}
-        </p>
-        <button onClick={handleRestart}>もう一回挑戦</button>
-      </div>
+      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
+        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
+          読み込み中...
+        </div>
+      </main>
+    );
+  }
+
+  if (currentIndex >= totalQuestions) {
+    const percentage = Math.round((score / totalQuestions) * 100);
+
+    return (
+      <main className="min-h-screen bg-slate-100 p-4">
+        <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-xl">
+          <h1 className="text-2xl font-bold text-center mb-6">結果画面</h1>
+
+          <div className="rounded-2xl bg-slate-50 p-6 text-center border">
+            <p className="text-lg mb-2">おつかれさま</p>
+            <p className="text-3xl font-bold mb-2">
+              {score} / {totalQuestions} 問正解
+            </p>
+            <p className="text-slate-600">正答率：{percentage}%</p>
+          </div>
+
+          <button
+            onClick={handleRestart}
+            className="mt-6 w-full rounded-2xl bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-blue-700 active:scale-[0.99]"
+          >
+            もう一度挑戦する
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (!currentQuestion) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
+        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
+          読み込み中...
+        </div>
+      </main>
     );
   }
 
   return (
-    <div>
-      <h2>{currentQuestion.text}</h2>
+    <main className="min-h-screen bg-slate-100 p-4">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-4 rounded-2xl bg-white p-4 shadow">
+          <h1 className="text-2xl font-bold mb-2">簿記 仕訳練習アプリ</h1>
+          <p className="text-sm text-slate-600">
+            第{currentIndex + 1}問 / {totalQuestions}問
+          </p>
+        </div>
 
-      <button onClick={handleCheck}>解答</button>
+        <div className="mb-4 rounded-2xl bg-white p-5 shadow">
+          <h2 className="mb-3 text-lg font-bold">問題</h2>
+          <p className="leading-7">{currentQuestion.text}</p>
+        </div>
 
-      {isAnswered && (
-        <>
-          <p>{isCorrect ? "正解" : "不正解"}</p>
-          <p>{currentQuestion.explanation}</p>
-          <button onClick={handleNext}>次へ</button>
-        </>
-      )}
-    </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <section className="rounded-2xl bg-white p-5 shadow">
+            <h2 className="mb-4 text-xl font-bold text-blue-700">借方</h2>
+
+            {debitLines.map((line, index) => (
+              <div
+                key={`debit-${index}`}
+                className="mb-4 rounded-2xl border border-slate-200 p-4"
+              >
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  勘定科目 {index + 1}
+                </label>
+                <select
+                  value={line.account}
+                  onChange={(e) =>
+                    handleLineChange(
+                      "debit",
+                      index as 0 | 1,
+                      "account",
+                      e.target.value
+                    )
+                  }
+                  disabled={isAnswered}
+                  className="mb-3 w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:border-blue-500"
+                >
+                  <option value="">選択してください</option>
+                  {accountOptions.map((option) => (
+                    <option key={`debit-${index}-${option}`} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  金額 {index + 1}
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={line.amount}
+                  onChange={(e) =>
+                    handleLineChange(
+                      "debit",
+                      index as 0 | 1,
+                      "amount",
+                      e.target.value
+                    )
+                  }
+                  disabled={isAnswered}
+                  className="w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-blue-500"
+                  placeholder="例：100,000"
+                />
+              </div>
+            ))}
+          </section>
+
+          <section className="rounded-2xl bg-white p-5 shadow">
+            <h2 className="mb-4 text-xl font-bold text-rose-700">貸方</h2>
+
+            {creditLines.map((line, index) => (
+              <div
+                key={`credit-${index}`}
+                className="mb-4 rounded-2xl border border-slate-200 p-4"
+              >
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  勘定科目 {index + 1}
+                </label>
+                <select
+                  value={line.account}
+                  onChange={(e) =>
+                    handleLineChange(
+                      "credit",
+                      index as 0 | 1,
+                      "account",
+                      e.target.value
+                    )
+                  }
+                  disabled={isAnswered}
+                  className="mb-3 w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:border-rose-500"
+                >
+                  <option value="">選択してください</option>
+                  {accountOptions.map((option) => (
+                    <option key={`credit-${index}-${option}`} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+
+                <label className="mb-2 block text-sm font-medium text-slate-700">
+                  金額 {index + 1}
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={line.amount}
+                  onChange={(e) =>
+                    handleLineChange(
+                      "credit",
+                      index as 0 | 1,
+                      "amount",
+                      e.target.value
+                    )
+                  }
+                  disabled={isAnswered}
+                  className="w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-rose-500"
+                  placeholder="例：100,000"
+                />
+              </div>
+            ))}
+          </section>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3">
+          {!isAnswered ? (
+            <button
+              onClick={handleCheckAnswer}
+              className="w-full rounded-2xl bg-emerald-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-emerald-700 active:scale-[0.99]"
+            >
+              解答する
+            </button>
+          ) : (
+            <>
+              <div
+                className={`rounded-2xl p-5 shadow ${
+                  isCorrect
+                    ? "bg-gradient-to-r from-yellow-200 via-emerald-200 to-sky-200 border-2 border-emerald-400"
+                    : "bg-red-50 border border-red-200"
+                }`}
+              >
+                <h3
+                  className={`mb-2 text-xl font-bold ${
+                    isCorrect ? "text-emerald-700" : "text-red-700"
+                  }`}
+                >
+                  {isCorrect ? "正解！" : "不正解"}
+                </h3>
+
+                <div className="mb-4 text-sm leading-7 text-slate-700">
+                  <p className="font-semibold">正答</p>
+
+                  <div className="mt-2 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-xl bg-white/70 p-3">
+                      <p className="mb-2 font-bold text-blue-700">借方</p>
+                      {correctDebitLines.map((line, idx) => (
+                        <p key={idx}>
+                          {line.account} / {line.amount.toLocaleString("ja-JP")}
+                        </p>
+                      ))}
+                    </div>
+
+                    <div className="rounded-xl bg-white/70 p-3">
+                      <p className="mb-2 font-bold text-rose-700">貸方</p>
+                      {correctCreditLines.map((line, idx) => (
+                        <p key={idx}>
+                          {line.account} / {line.amount.toLocaleString("ja-JP")}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-white/70 p-4 text-sm leading-7 text-slate-800">
+                  <p className="mb-1 font-semibold">解説</p>
+                  <p>{currentQuestion.explanation}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleNextQuestion}
+                className="w-full rounded-2xl bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-blue-700 active:scale-[0.99]"
+              >
+                {isLastQuestion ? "結果を見る" : "次の問題へ"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </main>
   );
 }
