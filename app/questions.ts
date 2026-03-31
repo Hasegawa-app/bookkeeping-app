@@ -1,4 +1,4 @@
-import { OptionSetKey, Question } from "./types";
+import type { OptionSetKey, Question } from "./types";
 
 export const optionSets: Record<OptionSetKey, string[]> = {
   sales: [
