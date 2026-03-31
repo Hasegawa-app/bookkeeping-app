@@ -117,11 +117,56 @@ export default function Page() {
     setShuffledQuestions(shuffleArray(questions));
   }, []);
 
+  const totalQuestions = shuffledQuestions.length;
+
+  if (totalQuestions === 0) {
+    return (
+      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
+        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
+          読み込み中...
+        </div>
+      </main>
+    );
+  }
+
+  if (currentIndex >= totalQuestions) {
+    const percentage = Math.round((score / totalQuestions) * 100);
+
+    return (
+      <main className="min-h-screen bg-slate-100 p-4">
+        <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-xl">
+          <h1 className="text-2xl font-bold text-center mb-6">結果画面</h1>
+
+          <div className="rounded-2xl bg-slate-50 p-6 text-center border">
+            <p className="text-lg mb-2">おつかれさま</p>
+            <p className="text-3xl font-bold mb-2">
+              {score} / {totalQuestions} 問正解
+            </p>
+            <p className="text-slate-600">正答率：{percentage}%</p>
+          </div>
+
+          <button
+            onClick={() => {
+              setShuffledQuestions(shuffleArray(questions));
+              setCurrentIndex(0);
+              setDebitLines(makeInitialLines());
+              setCreditLines(makeInitialLines());
+              setIsAnswered(false);
+              setIsCorrect(false);
+              setScore(0);
+            }}
+            className="mt-6 w-full rounded-2xl bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-blue-700 active:scale-[0.99]"
+          >
+            もう一度挑戦する
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   const currentQuestion = shuffledQuestions[currentIndex];
 
   const accountOptions = useMemo(() => {
-    if (!currentQuestion) return [];
-
     const allOptions = optionSets[currentQuestion.optionSetKey];
 
     const correctAccounts = [
@@ -143,16 +188,6 @@ export default function Page() {
     return shuffleArray([...uniqueCorrectAccounts, ...selectedDummies]);
   }, [currentQuestion]);
 
-  if (!currentQuestion) {
-    return (
-      <main className="min-h-screen bg-slate-100 p-4 flex items-center justify-center">
-        <div className="rounded-2xl bg-white p-6 shadow-md text-center">
-          読み込み中...
-        </div>
-      </main>
-    );
-  }
-
   const correctDebitLines = buildCorrectLines(
     currentQuestion.debit,
     currentQuestion.debitAmount,
@@ -167,7 +202,6 @@ export default function Page() {
     currentQuestion.creditAmount2
   );
 
-  const totalQuestions = shuffledQuestions.length;
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
   const handleLineChange = (
@@ -214,44 +248,6 @@ export default function Page() {
     setCurrentIndex((prev) => prev + 1);
   };
 
-  const handleRestart = () => {
-    setShuffledQuestions(shuffleArray(questions));
-    setCurrentIndex(0);
-    setDebitLines(makeInitialLines());
-    setCreditLines(makeInitialLines());
-    setIsAnswered(false);
-    setIsCorrect(false);
-    setScore(0);
-  };
-
-  if (currentIndex >= totalQuestions) {
-    const percentage =
-      totalQuestions === 0 ? 0 : Math.round((score / totalQuestions) * 100);
-
-    return (
-      <main className="min-h-screen bg-slate-100 p-4">
-        <div className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-xl">
-          <h1 className="text-2xl font-bold text-center mb-6">結果画面</h1>
-
-          <div className="rounded-2xl bg-slate-50 p-6 text-center border">
-            <p className="text-lg mb-2">おつかれさま</p>
-            <p className="text-3xl font-bold mb-2">
-              {score} / {totalQuestions} 問正解
-            </p>
-            <p className="text-slate-600">正答率：{percentage}%</p>
-          </div>
-
-          <button
-            onClick={handleRestart}
-            className="mt-6 w-full rounded-2xl bg-blue-600 px-4 py-4 text-lg font-bold text-white shadow hover:bg-blue-700 active:scale-[0.99]"
-          >
-            もう一度挑戦する
-          </button>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-slate-100 p-4">
       <div className="mx-auto max-w-5xl">
@@ -282,12 +278,7 @@ export default function Page() {
                 <select
                   value={line.account}
                   onChange={(e) =>
-                    handleLineChange(
-                      "debit",
-                      index as 0 | 1,
-                      "account",
-                      e.target.value
-                    )
+                    handleLineChange("debit", index as 0 | 1, "account", e.target.value)
                   }
                   disabled={isAnswered}
                   className="mb-3 w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:border-blue-500"
@@ -308,12 +299,7 @@ export default function Page() {
                   inputMode="numeric"
                   value={line.amount}
                   onChange={(e) =>
-                    handleLineChange(
-                      "debit",
-                      index as 0 | 1,
-                      "amount",
-                      e.target.value
-                    )
+                    handleLineChange("debit", index as 0 | 1, "amount", e.target.value)
                   }
                   disabled={isAnswered}
                   className="w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-blue-500"
@@ -337,12 +323,7 @@ export default function Page() {
                 <select
                   value={line.account}
                   onChange={(e) =>
-                    handleLineChange(
-                      "credit",
-                      index as 0 | 1,
-                      "account",
-                      e.target.value
-                    )
+                    handleLineChange("credit", index as 0 | 1, "account", e.target.value)
                   }
                   disabled={isAnswered}
                   className="mb-3 w-full rounded-xl border bg-white px-3 py-3 text-base outline-none focus:border-rose-500"
@@ -363,12 +344,7 @@ export default function Page() {
                   inputMode="numeric"
                   value={line.amount}
                   onChange={(e) =>
-                    handleLineChange(
-                      "credit",
-                      index as 0 | 1,
-                      "amount",
-                      e.target.value
-                    )
+                    handleLineChange("credit", index as 0 | 1, "amount", e.target.value)
                   }
                   disabled={isAnswered}
                   className="w-full rounded-xl border px-3 py-3 text-base outline-none focus:border-rose-500"
