@@ -1,0 +1,164 @@
+import { OptionSetKey, Question } from "./types";
+
+export const optionSets: Record<OptionSetKey, string[]> = {
+  sales: [
+    "現金",
+    "売掛金",
+    "売上",
+    "受取手形",
+    "買掛金",
+    "商品",
+    "支払手数料",
+    "通信費",
+  ],
+  purchase: [
+    "現金",
+    "買掛金",
+    "支払手形",
+    "商品",
+    "仕入",
+    "売掛金",
+    "前払金",
+    "支払手数料",
+  ],
+  expense: [
+    "現金",
+    "普通預金",
+    "水道光熱費",
+    "通信費",
+    "旅費交通費",
+    "雑費",
+    "消耗品費",
+    "未払金",
+    "租税公課",
+  ],
+  asset: [
+    "現金",
+    "普通預金",
+    "備品",
+    "建物",
+    "土地",
+    "車両運搬具",
+    "未払金",
+    "買掛金",
+  ],
+  depreciation: [
+    "減価償却費",
+    "備品減価償却累計額",
+    "建物減価償却累計額",
+    "車両運搬具減価償却累計額",
+    "備品",
+    "建物",
+    "車両運搬具",
+    "現金",
+  ],
+};
+
+export const questions: Question[] = [
+  {
+    text: "商品100,000円を売り、代金のうち60,000円は現金で受け取り、残額は掛けとした。",
+    debit: "現金",
+    debitAmount: 60000,
+    debit2: "売掛金",
+    debitAmount2: 40000,
+    credit: "売上",
+    creditAmount: 100000,
+    explanation:
+      "商品を売ったので貸方は売上100,000円。受け取った代金のうち現金60,000円は借方に現金、残り40,000円は後で受け取るため借方に売掛金を記入する。",
+    optionSetKey: "sales",
+  },
+  {
+    text: "商品80,000円を仕入れ、代金のうち30,000円は現金で支払い、残額は掛けとした。",
+    debit: "仕入",
+    debitAmount: 80000,
+    credit: "現金",
+    creditAmount: 30000,
+    credit2: "買掛金",
+    creditAmount2: 50000,
+    explanation:
+      "商品を仕入れたので借方は仕入80,000円。支払った現金30,000円は貸方に現金、残り50,000円は後払いなので貸方に買掛金を記入する。",
+    optionSetKey: "purchase",
+  },
+  {
+    text: "通信費12,000円を現金で支払った。",
+    debit: "通信費",
+    debitAmount: 12000,
+    credit: "現金",
+    creditAmount: 12000,
+    explanation:
+      "費用の発生なので借方は通信費、支払手段が現金なので貸方は現金となる。",
+    optionSetKey: "expense",
+  },
+  {
+    text: "備品150,000円を購入し、代金は翌月払いとした。",
+    debit: "備品",
+    debitAmount: 150000,
+    credit: "未払金",
+    creditAmount: 150000,
+    explanation:
+      "備品を購入したので借方は備品。代金はまだ支払っていないので貸方は未払金となる。",
+    optionSetKey: "asset",
+  },
+  {
+    text: "建物について間接法により減価償却を行い、当期の減価償却費は40,000円であった。",
+    debit: "減価償却費",
+    debitAmount: 40000,
+    credit: "建物減価償却累計額",
+    creditAmount: 40000,
+    explanation:
+      "間接法なので、資産そのものを直接減らさず、貸方に建物減価償却累計額を計上する。借方は費用として減価償却費。",
+    optionSetKey: "depreciation",
+  },
+  {
+    text: "商品50,000円を売り、代金は掛けとした。",
+    debit: "売掛金",
+    debitAmount: 50000,
+    credit: "売上",
+    creditAmount: 50000,
+    explanation:
+      "商品を売ったので貸方は売上。代金は後で受け取るため借方は売掛金。",
+    optionSetKey: "sales",
+  },
+  {
+    text: "商品40,000円を仕入れ、代金は現金で支払った。",
+    debit: "仕入",
+    debitAmount: 40000,
+    credit: "現金",
+    creditAmount: 40000,
+    explanation:
+      "商品を仕入れたので借方は仕入。支払手段が現金なので貸方は現金。",
+    optionSetKey: "purchase",
+  },
+  {
+    text: "旅費交通費8,500円を現金で支払った。",
+    debit: "旅費交通費",
+    debitAmount: 8500,
+    credit: "現金",
+    creditAmount: 8500,
+    explanation:
+      "旅費交通費という費用が発生したので借方。現金で支払っているので貸方は現金。",
+    optionSetKey: "expense",
+  },
+  {
+    text: "車両運搬具300,000円を購入し、100,000円を現金で支払い、残額は翌月払いとした。",
+    debit: "車両運搬具",
+    debitAmount: 300000,
+    credit: "現金",
+    creditAmount: 100000,
+    credit2: "未払金",
+    creditAmount2: 200000,
+    explanation:
+      "車両運搬具を取得したので借方は車両運搬具300,000円。支払った100,000円は貸方に現金、残額200,000円は未払金。",
+    optionSetKey: "asset",
+  },
+  {
+    text: "備品について間接法により減価償却を行い、当期の減価償却費は25,000円であった。",
+    debit: "減価償却費",
+    debitAmount: 25000,
+    credit: "備品減価償却累計額",
+    creditAmount: 25000,
+    explanation:
+      "間接法では貸方に備品減価償却累計額を計上する。借方は減価償却費。",
+    optionSetKey: "depreciation",
+  },
+];
