@@ -3,7 +3,8 @@ export type OptionSetKey =
   | "purchase"
   | "expense"
   | "asset"
-  | "depreciation";
+  | "depreciation"
+  | "adjustments";
 
 export type Question = {
   text: string;

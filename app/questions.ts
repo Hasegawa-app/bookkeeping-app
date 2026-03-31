@@ -52,6 +52,18 @@ export const optionSets: Record<OptionSetKey, string[]> = {
     "車両運搬具",
     "現金",
   ],
+  adjustment: [
+  "未払費用",
+  "前払費用",
+  "貸倒引当金",
+  "貸倒引当金繰入",
+  "減価償却費",
+  "建物減価償却累計額",
+  "備品減価償却累計額",
+  "水道光熱費",
+  "保険料",
+  "売掛金",
+]
 };
 
 /* =========================
@@ -207,7 +219,7 @@ const assetQuestions: Question[] = [
     optionSetKey: "asset",
   },
   {
-    text: "土地700,000円を購入し、200,000円を現金で支払い、残額を未払金とした。",
+    text: "土地700,000円を購入し、200,000円を現金で支払い、残額は後日支払いとした。",
     debit: "土地",
     debitAmount: 700000,
     credit: "現金",
@@ -246,6 +258,42 @@ const depreciationQuestions: Question[] = [
     optionSetKey: "depreciation",
   },
 ];
+/* =========================
+   調整
+========================= */
+
+const adjustmentQuestions: Question[] = [
+  {
+  text: "電気代10,000円は未払いである。",
+  debit: "水道光熱費",
+  debitAmount: 10000,
+  credit: "未払費用",
+  creditAmount: 10000,
+  explanation:
+    "当期の費用であるため借方は水道光熱費とする。まだ支払っていないため貸方は未払費用となる。",
+  optionSetKey: "adjustment",
+},
+  {
+  text: "保険料12,000円のうち、3,000円は来期分である。",
+  debit: "前払費用",
+  debitAmount: 3000,
+  credit: "保険料",
+  creditAmount: 3000,
+  explanation:
+    "来期分は当期の費用ではないため前払費用に振り替える。よって借方は前払費用、貸方は保険料となる。",
+  optionSetKey: "adjustment",
+},
+  {
+  text: "売掛金100,000円に対し、2%の貸倒引当金を設定した。",
+  debit: "貸倒引当金繰入",
+  debitAmount: 2000,
+  credit: "貸倒引当金",
+  creditAmount: 2000,
+  explanation:
+    "100,000円×2%＝2,000円より貸倒引当金を設定する。費用として貸倒引当金繰入を借方、貸倒引当金を貸方に計上する。",
+  optionSetKey: "adjustment",
+  },
+];
 
 /* =========================
    統合
@@ -257,4 +305,5 @@ export const questions: Question[] = [
   ...expenseQuestions,
   ...assetQuestions,
   ...depreciationQuestions,
+  ...adjustmentQuestions,
 ];
