@@ -240,7 +240,7 @@ export default function Page() {
           <h1 className="text-2xl font-bold text-center mb-6">結果画面</h1>
 
           <div className="rounded-2xl bg-slate-50 p-6 text-center border">
-            <p className="text-lg mb-2">おつかれさま</p>
+            <p className="text-lg mb-2">おつかれさまです！すべての問題が終了しました。</p>
             <p className="text-3xl font-bold mb-2">
               {score} / {totalQuestions} 問正解
             </p>
